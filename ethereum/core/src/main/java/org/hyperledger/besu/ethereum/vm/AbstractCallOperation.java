@@ -222,11 +222,17 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
   public void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
-
+    System.out.println("STATICCALL PC : " + frame.getPC());
+    System.out.println("STATICCALL OUTPUT frame: " + frame.toString());
+    System.out.println("STATICCALL OUTPUT childframe: " + childFrame.toString());
+    System.out.println("STATICCALL OUTPUT childframe.outputdata: " + childFrame.getOutputData());
+    System.out.println("STATICCALL OUTPUT childframe.outputDataLength: " + outputDataLength(frame));
     final UInt256 outputOffset = outputDataOffset(frame);
     final UInt256 outputSize = outputDataLength(frame);
     final Bytes outputData = childFrame.getOutputData();
     final int outputSizeAsInt = outputSize.intValue();
+    System.out.println("STATICCALL OUTPUT DATA: " + outputData.toString());
+    System.out.println("STATICCALL OUTPUT SIZE: " + outputSize.toString());
 
     if (outputSizeAsInt > outputData.size()) {
       frame.expandMemory(outputOffset, outputSize);

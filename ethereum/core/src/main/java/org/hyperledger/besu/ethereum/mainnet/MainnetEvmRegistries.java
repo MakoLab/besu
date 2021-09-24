@@ -95,6 +95,7 @@ import org.hyperledger.besu.ethereum.vm.operations.SubOperation;
 import org.hyperledger.besu.ethereum.vm.operations.SwapOperation;
 import org.hyperledger.besu.ethereum.vm.operations.TimestampOperation;
 import org.hyperledger.besu.ethereum.vm.operations.XorOperation;
+import org.hyperledger.besu.ethereum.vm.operations.LoadGraphOperation;
 
 import java.math.BigInteger;
 
@@ -250,6 +251,7 @@ abstract class MainnetEvmRegistries {
     registry.put(new ReturnDataSizeOperation(gasCalculator));
     registry.put(new RevertOperation(gasCalculator));
     registry.put(new StaticCallOperation(gasCalculator));
+    registry.put(new LoadGraphOperation(gasCalculator));
   }
 
   private static void registerConstantinopleOpcodes(
