@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -188,7 +188,7 @@ public final class EthHash {
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (header.getBaseFee().isPresent()) {
-      out.writeUInt256Scalar(header.getBaseFee().get());
+      out.writeLongScalar(header.getBaseFee().get());
     }
     out.endList();
     return Bytes32.wrap(

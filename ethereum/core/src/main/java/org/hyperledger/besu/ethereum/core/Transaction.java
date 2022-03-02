@@ -23,16 +23,12 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -46,7 +42,6 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt256s;
 
 /** An operation submitted by an external actor to be applied to the system. */
 public class Transaction
@@ -126,7 +121,7 @@ public class Transaction
    * @param transactionType the transaction type
    * @param nonce the nonce
    * @param gasPrice the gas price
-   * @param maxPriorityFeePerGas the max priority fee per gas
+   * @param maxPriorityFeePerGas the max priorty fee per gas
    * @param maxFeePerGas the max fee per gas
    * @param gasLimit the gas limit
    * @param to the transaction recipient
@@ -384,7 +379,7 @@ public class Transaction
    * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
    * market parameters.
    *
-   * @return whether cost params are present
+   * @return whether cost params are presetn
    */
   public boolean hasCostParams() {
     return Arrays.asList(getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas()).stream()
@@ -393,24 +388,22 @@ public class Transaction
         .anyMatch(q -> q.longValue() > 0L);
   }
 
-  public Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee) {
+  public long getEffectivePriorityFeePerGas(final Optional<Long> maybeBaseFee) {
     return maybeBaseFee
         .map(
             baseFee -> {
               if (getType().supports1559FeeMarket()) {
-                if (baseFee.greaterOrEqualThan(getMaxFeePerGas().get())) {
-                  return Wei.ZERO;
-                }
-                return UInt256s.min(
-                    getMaxPriorityFeePerGas().get(), getMaxFeePerGas().get().subtract(baseFee));
+                return Math.min(
+                    getMaxPriorityFeePerGas().get().getAsBigInteger().longValue(),
+                    getMaxFeePerGas().get().getAsBigInteger().longValue() - baseFee);
               } else {
-                if (baseFee.greaterOrEqualThan(getGasPrice().get())) {
-                  return Wei.ZERO;
-                }
-                return getGasPrice().get().subtract(baseFee);
+                return getGasPrice().get().getValue().longValue() - baseFee;
               }
             })
-        .orElseGet(() -> getGasPrice().orElse(Wei.ZERO));
+        .map(
+            maybeNegativeEffectivePriorityFeePerGas ->
+                Math.max(0, maybeNegativeEffectivePriorityFeePerGas))
+        .orElseGet(() -> getGasPrice().map(Wei::getValue).map(Number::longValue).orElse(0L));
   }
   /**
    * Returns the transaction gas limit.
@@ -664,13 +657,9 @@ public class Transaction
    * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
    * chainId.
    *
-   * @param goQuorumCompatibilityMode true if GoQuorum compatbility mode is set
    * @return true if GoQuorum private transaction, false otherwise
    */
-  public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
-    if (!goQuorumCompatibilityMode) {
-      return false;
-    }
+  public boolean isGoQuorumPrivateTransaction() {
     if (chainId.isPresent()) {
       return false;
     }
@@ -1054,7 +1043,7 @@ public class Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
-  public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
-    return getEffectivePriorityFeePerGas(baseFeePerGas).add(baseFeePerGas.orElse(Wei.ZERO));
+  public final Wei getEffectiveGasPrice(final Optional<Long> baseFeePerGas) {
+    return Wei.of(getEffectivePriorityFeePerGas(baseFeePerGas) + baseFeePerGas.orElse(0L));
   }
 }

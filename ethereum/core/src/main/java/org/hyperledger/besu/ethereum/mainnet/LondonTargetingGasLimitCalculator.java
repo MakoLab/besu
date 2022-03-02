@@ -16,12 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LondonTargetingGasLimitCalculator extends FrontierTargetingGasLimitCalculator {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(LondonTargetingGasLimitCalculator.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final long londonForkBlock;
   private final BaseFeeMarket feeMarket;
 

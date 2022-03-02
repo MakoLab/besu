@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 @FunctionalInterface
 public interface ConsensusContextFactory {
 
-  ConsensusContext create(
+  Object create(
       Blockchain blockchain,
       WorldStateArchive worldStateArchive,
       ProtocolSchedule protocolSchedule);

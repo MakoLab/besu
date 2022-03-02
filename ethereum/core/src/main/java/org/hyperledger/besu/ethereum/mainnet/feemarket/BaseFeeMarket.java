@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public interface BaseFeeMarket extends FeeMarket {
@@ -26,7 +25,7 @@ public interface BaseFeeMarket extends FeeMarket {
 
   long getBasefeeMaxChangeDenominator();
 
-  Wei getInitialBasefee();
+  long getInitialBasefee();
 
   long getSlackCoefficient();
 
@@ -41,9 +40,9 @@ public interface BaseFeeMarket extends FeeMarket {
     return blockHeader.getGasLimit() / getSlackCoefficient();
   }
 
-  Wei computeBaseFee(
+  long computeBaseFee(
       final long blockNumber,
-      final Wei parentBaseFee,
+      final long parentBaseFee,
       final long parentBlockGasUsed,
       final long targetGasUsed);
 

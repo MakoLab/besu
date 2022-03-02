@@ -16,13 +16,12 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FrontierTargetingGasLimitCalculator extends AbstractGasLimitSpecification
     implements GasLimitCalculator {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(FrontierTargetingGasLimitCalculator.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final long maxConstantAdjustmentIncrement;
 
   public FrontierTargetingGasLimitCalculator() {

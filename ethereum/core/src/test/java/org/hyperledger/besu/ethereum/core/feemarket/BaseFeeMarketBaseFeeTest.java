@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 import static com.google.common.base.Preconditions.checkState;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
@@ -66,16 +65,16 @@ public class BaseFeeMarketBaseFeeTest {
     }
   }
 
-  private final Wei parentBaseFee;
+  private final long parentBaseFee;
   private final long parentGasUsed;
   private final long parentTargetGasUsed;
-  private final Wei expectedBaseFee;
+  private final long expectedBaseFee;
 
   public BaseFeeMarketBaseFeeTest(
-      final Wei parentBaseFee,
+      final long parentBaseFee,
       final long parentGasUsed,
       final long parentTargetGasUsed,
-      final Wei expectedBaseFee) {
+      final long expectedBaseFee) {
     this.parentBaseFee = parentBaseFee;
     this.parentGasUsed = parentGasUsed;
     this.parentTargetGasUsed = parentTargetGasUsed;
@@ -91,25 +90,25 @@ public class BaseFeeMarketBaseFeeTest {
 
   private static class BaseFeeMarketBaseFeeTestCase {
 
-    private Wei parentBaseFee;
+    private long parentBaseFee;
     private long parentGasUsed;
     private long parentTargetGasUsed;
-    private Wei expectedBaseFee;
+    private long expectedBaseFee;
 
     public BaseFeeMarketBaseFeeTestCase() {}
 
     public BaseFeeMarketBaseFeeTestCase(
-        final Wei parentBaseFee,
+        final long parentBaseFee,
         final long parentGasUsed,
         final long parentTargetGasUsed,
-        final Wei expectedBaseFee) {
+        final long expectedBaseFee) {
       this.parentBaseFee = parentBaseFee;
       this.parentGasUsed = parentGasUsed;
       this.parentTargetGasUsed = parentTargetGasUsed;
       this.expectedBaseFee = expectedBaseFee;
     }
 
-    public Wei getParentBaseFee() {
+    public long getParentBaseFee() {
       return parentBaseFee;
     }
 
@@ -121,11 +120,11 @@ public class BaseFeeMarketBaseFeeTest {
       return parentTargetGasUsed;
     }
 
-    public Wei getExpectedBaseFee() {
+    public long getExpectedBaseFee() {
       return expectedBaseFee;
     }
 
-    public void setParentBaseFee(final Wei parentBaseFee) {
+    public void setParentBaseFee(final long parentBaseFee) {
       this.parentBaseFee = parentBaseFee;
     }
 
@@ -137,7 +136,7 @@ public class BaseFeeMarketBaseFeeTest {
       this.parentTargetGasUsed = parentTargetGasUsed;
     }
 
-    public void setExpectedBaseFee(final Wei expectedBaseFee) {
+    public void setExpectedBaseFee(final long expectedBaseFee) {
       this.expectedBaseFee = expectedBaseFee;
     }
   }

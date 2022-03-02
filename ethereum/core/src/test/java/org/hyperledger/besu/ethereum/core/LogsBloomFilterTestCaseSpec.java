@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.vm.LogMock;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 

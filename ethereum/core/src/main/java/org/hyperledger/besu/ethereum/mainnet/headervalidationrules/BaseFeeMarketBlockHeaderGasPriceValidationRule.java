@@ -16,19 +16,17 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException.MissingBaseFeeFromBlockHeader;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BaseFeeMarketBlockHeaderGasPriceValidationRule
     implements DetachedBlockHeaderValidationRule {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BaseFeeMarketBlockHeaderGasPriceValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final BaseFeeMarket baseFeeMarket;
 
   public BaseFeeMarketBlockHeaderGasPriceValidationRule(final BaseFeeMarket baseFeeMarket) {
@@ -41,20 +39,19 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
 
       // if this is the fork block, baseFee should be the initial baseFee
       if (baseFeeMarket.isForkBlock(header.getNumber())) {
-        return baseFeeMarket
-            .getInitialBasefee()
-            .equals(header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader()));
+        return baseFeeMarket.getInitialBasefee()
+            == header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       }
 
-      final Wei parentBaseFee =
+      final Long parentBaseFee =
           parent.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
-      final Wei currentBaseFee =
+      final Long currentBaseFee =
           header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       final long targetGasUsed = baseFeeMarket.targetGasUsed(parent);
-      final Wei expectedBaseFee =
+      final long expectedBaseFee =
           baseFeeMarket.computeBaseFee(
               header.getNumber(), parentBaseFee, parent.getGasUsed(), targetGasUsed);
-      if (!expectedBaseFee.equals(currentBaseFee)) {
+      if (expectedBaseFee != currentBaseFee) {
         LOG.info(
             "Invalid block header: basefee {} does not equal expected basefee {}",
             header.getBaseFee().orElseThrow(),

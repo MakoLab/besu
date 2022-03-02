@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 public class PrecompiledContractConfiguration {
   private GasCalculator gasCalculator;

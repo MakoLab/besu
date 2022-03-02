@@ -25,10 +25,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -39,11 +39,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -159,44 +157,6 @@ public class BonsaiWorldStateArchiveTest {
         .containsInstanceOf(BonsaiPersistedWorldState.class);
 
     // verify is not trying to get the trie log layer to rollback when block is present
-    verify(layeredWorldStatesByHash).entrySet();
-    verifyNoMoreInteractions(layeredWorldStatesByHash);
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Test
-  public void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
-    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
-    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
-    final BlockHeader blockHeaderChainA =
-        blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
-    final BlockHeader blockHeaderChainB =
-        blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
-
-    final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash = mock(HashMap.class);
-    when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
-    when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
-    when(layeredWorldStatesByHash.get(eq(blockHeaderChainB.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
-
-    bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
-
-    // initial persisted state hash key
-    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
-    when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
-        .thenReturn(Optional.of(blockHeaderChainB));
-    when(blockchain.getBlockHeader(eq(genesis.getHash()))).thenReturn(Optional.of(genesis));
-
-    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeaderChainB.getHash()))
-        .containsInstanceOf(BonsaiPersistedWorldState.class);
-
-    // verify is trying to get the trie log layers to rollback and roll forward
-    verify(layeredWorldStatesByHash).containsKey(eq(blockHeaderChainA.getHash()));
-    verify(layeredWorldStatesByHash).get(eq(blockHeaderChainA.getHash()));
-    verify(layeredWorldStatesByHash).containsKey(eq(blockHeaderChainB.getHash()));
-    verify(layeredWorldStatesByHash).get(eq(blockHeaderChainB.getHash()));
     verify(layeredWorldStatesByHash).entrySet();
     verifyNoMoreInteractions(layeredWorldStatesByHash);
   }

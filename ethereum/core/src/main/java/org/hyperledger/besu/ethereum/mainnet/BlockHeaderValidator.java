@@ -23,12 +23,12 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BlockHeaderValidator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BlockHeaderValidator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final List<Rule> rules;
 
@@ -87,12 +87,7 @@ public class BlockHeaderValidator {
       final Predicate<Rule> filter) {
     return rules.stream()
         .filter(filter)
-        .allMatch(
-            rule -> {
-              boolean worked = rule.validate(header, parent, protocolContext);
-              if (!worked) LOG.debug("{} rule failed", rule.innerRuleClass().getCanonicalName());
-              return worked;
-            });
+        .allMatch(rule -> rule.validate(header, parent, protocolContext));
   }
 
   private Optional<BlockHeader> getParent(final BlockHeader header, final ProtocolContext context) {
@@ -106,15 +101,15 @@ public class BlockHeaderValidator {
 
   private static class Rule {
     private final boolean detachedSupported;
-    private final AttachedBlockHeaderValidationRule wrappedRule;
+    private final AttachedBlockHeaderValidationRule rule;
     private final boolean includeInLightValidation;
 
     private Rule(
         final boolean detachedSupported,
-        final AttachedBlockHeaderValidationRule toWrap,
+        final AttachedBlockHeaderValidationRule rule,
         final boolean includeInLightValidation) {
       this.detachedSupported = detachedSupported;
-      this.wrappedRule = toWrap;
+      this.rule = rule;
       this.includeInLightValidation = includeInLightValidation;
     }
 
@@ -124,15 +119,11 @@ public class BlockHeaderValidator {
 
     public boolean validate(
         final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
-      return this.wrappedRule.validate(header, parent, protocolContext);
+      return this.rule.validate(header, parent, protocolContext);
     }
 
     boolean includeInLightValidation() {
       return includeInLightValidation;
-    }
-
-    public Class<? extends AttachedBlockHeaderValidationRule> innerRuleClass() {
-      return wrappedRule.getClass();
     }
   }
 
@@ -143,8 +134,8 @@ public class BlockHeaderValidator {
     public Builder addRule(
         final Function<DifficultyCalculator, AttachedBlockHeaderValidationRule> ruleBuilder) {
       this.rulesBuilder.add(
-          applyMe -> {
-            final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(applyMe);
+          difficultyCalculator -> {
+            final AttachedBlockHeaderValidationRule rule = ruleBuilder.apply(difficultyCalculator);
             return new Rule(false, rule, rule.includeInLightValidation());
           });
       return this;
@@ -157,11 +148,12 @@ public class BlockHeaderValidator {
 
     public Builder addRule(final DetachedBlockHeaderValidationRule rule) {
       this.rulesBuilder.add(
-          ignored ->
-              new Rule(
-                  true,
-                  (header, parent, protocolContext) -> rule.validate(header, parent),
-                  rule.includeInLightValidation()));
+          ignored -> {
+            return new Rule(
+                true,
+                (header, parent, protocolContext) -> rule.validate(header, parent),
+                rule.includeInLightValidation());
+          });
       return this;
     }
 

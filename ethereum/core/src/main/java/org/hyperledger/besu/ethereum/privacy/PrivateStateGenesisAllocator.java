@@ -14,36 +14,33 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
-import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import java.math.BigInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PrivateStateGenesisAllocator {
-  private static final Logger LOG = LoggerFactory.getLogger(PrivateStateGenesisAllocator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
-  private final Boolean isFlexiblePrivacyEnabled;
+  private final Boolean isOnchainPrivacyEnabled;
   private final PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
   public PrivateStateGenesisAllocator(
-      final Boolean isFlexiblePrivacyEnabled,
+      final Boolean isOnchainPrivacyEnabled,
       final PrivacyGroupGenesisProvider privacyGroupGenesisProvider) {
-    this.isFlexiblePrivacyEnabled = isFlexiblePrivacyEnabled;
+    this.isOnchainPrivacyEnabled = isOnchainPrivacyEnabled;
     this.privacyGroupGenesisProvider = privacyGroupGenesisProvider;
   }
 
@@ -87,23 +84,26 @@ public class PrivateStateGenesisAllocator {
               });
     }
 
-    if (isFlexiblePrivacyEnabled) {
+    if (isOnchainPrivacyEnabled) {
       // inject management
       final MutableAccount managementContract =
-          privateWorldStateUpdater.createAccount(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT).getMutable();
+          privateWorldStateUpdater
+              .createAccount(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)
+              .getMutable();
 
       // this is the code for the simple management contract
-      managementContract.setCode(FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
+      managementContract.setCode(OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final MutableAccount procyContract =
-          privateWorldStateUpdater.createAccount(FLEXIBLE_PRIVACY_PROXY).getMutable();
+          privateWorldStateUpdater.createAccount(Address.ONCHAIN_PRIVACY_PROXY).getMutable();
 
       // this is the code for the proxy contract
-      procyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);
+      procyContract.setCode(OnChainGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       procyContract.setStorageValue(
-          UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));
+          UInt256.ZERO,
+          UInt256.fromBytes(Bytes32.leftPad(Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT)));
     }
 
     privateWorldStateUpdater.commit();

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.Optional;
@@ -30,17 +30,10 @@ public interface FeeMarket {
   TransactionPriceCalculator getTransactionPriceCalculator();
 
   Wei minTransactionPriceInNextBlock(
-      Transaction transaction, Supplier<Optional<Wei>> baseFeeSupplier);
-
-  boolean satisfiesFloorTxCost(Transaction txn);
+      Transaction transaction, Supplier<Optional<Long>> baseFeeSupplier);
 
   static BaseFeeMarket london(final long londonForkBlockNumber) {
-    return london(londonForkBlockNumber, Optional.empty());
-  }
-
-  static BaseFeeMarket london(
-      final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
-    return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
+    return new LondonFeeMarket(londonForkBlockNumber);
   }
 
   static FeeMarket legacy() {

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
-
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -52,17 +46,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
-    super(
-        parentHash,
-        coinbase,
-        difficulty,
-        number,
-        gasLimit,
-        timestamp,
-        baseFee,
-        mixHashOrPrevRandao);
+      final Long baseFee) {
+    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

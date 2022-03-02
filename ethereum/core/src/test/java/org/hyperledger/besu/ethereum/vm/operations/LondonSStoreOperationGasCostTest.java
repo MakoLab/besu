@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.MessageFrame.State;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.MessageFrame.State;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -78,8 +77,7 @@ public class LondonSStoreOperationGasCostTest {
   @Before
   public void setUp() {
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
-            new StubGenesisConfigOptions().londonBlock(0), EvmConfiguration.DEFAULT);
+        MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().londonBlock(0));
     codeExecutor = new TestCodeExecutor(protocolSchedule);
   }
 

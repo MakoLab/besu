@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -32,14 +32,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PrivateStateRehydration {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PrivateStateRehydration.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final PrivateStateStorage privateStateStorage;
   private final Blockchain blockchain;
@@ -73,7 +73,7 @@ public class PrivateStateRehydration {
     final Optional<Bytes> maybeGroupId =
         privateTransactionWithMetadataList.get(0).getPrivateTransaction().getPrivacyGroupId();
     if (maybeGroupId.isEmpty()) {
-      LOG.debug("Flexible groups must have a group id.");
+      LOG.debug("Onchain groups must have a group id.");
       return;
     }
     final Bytes32 privacyGroupId = Bytes32.wrap(maybeGroupId.get());

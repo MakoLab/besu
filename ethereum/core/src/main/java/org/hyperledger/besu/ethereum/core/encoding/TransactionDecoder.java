@@ -22,17 +22,16 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.AccessListEntry;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -62,13 +61,8 @@ public class TransactionDecoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
-    return decodeForWire(rlpInput, GoQuorumOptions.getGoQuorumCompatibilityMode());
-  }
-
-  public static Transaction decodeForWire(
-      final RLPInput rlpInput, final boolean goQuorumCompatibilityMode) {
     if (rlpInput.nextIsList()) {
-      return decodeFrontier(rlpInput, goQuorumCompatibilityMode);
+      return decodeFrontier(rlpInput);
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
@@ -78,16 +72,11 @@ public class TransactionDecoder {
   }
 
   public static Transaction decodeOpaqueBytes(final Bytes input) {
-    return decodeOpaqueBytes(input, GoQuorumOptions.getGoQuorumCompatibilityMode());
-  }
-
-  public static Transaction decodeOpaqueBytes(
-      final Bytes input, final boolean goQuorumCompatibilityMode) {
     final TransactionType transactionType;
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeForWire(RLP.input(input), goQuorumCompatibilityMode);
+      return decodeForWire(RLP.input(input));
     }
     return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
   }
@@ -99,7 +88,7 @@ public class TransactionDecoder {
         transactionType);
   }
 
-  static Transaction decodeFrontier(final RLPInput input, final boolean goQuorumCompatibilityMode) {
+  static Transaction decodeFrontier(final RLPInput input) {
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()
@@ -114,8 +103,7 @@ public class TransactionDecoder {
     final BigInteger v = input.readBigIntegerScalar();
     final byte recId;
     Optional<BigInteger> chainId = Optional.empty();
-    if (goQuorumCompatibilityMode
-        && GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
+    if (GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v)) {
       builder.v(v);
       recId = v.subtract(GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN).byteValueExact();
     } else if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {

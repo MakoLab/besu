@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validates the gas used in executing the block (defined by the supplied header) is less than or
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GasUsageValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   public GasUsageValidationRule() {}
 

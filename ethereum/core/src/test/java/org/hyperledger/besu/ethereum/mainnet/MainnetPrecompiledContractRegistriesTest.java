@@ -16,25 +16,20 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries.appendPrivacy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.OnChainPrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.ethereum.vm.GasCalculator;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MainnetPrecompiledContractRegistriesTest {
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
@@ -44,29 +39,30 @@ public class MainnetPrecompiledContractRegistriesTest {
       new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
 
   @Test
-  public void whenFlexiblePrivacyGroupsNotEnabled_defaultPrivacyPrecompileIsInRegistry() {
-    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(false);
+  public void whenOnchainPrivacyGroupsNotEnabled_defaultPrivacyPrecompileIsInRegistry() {
+    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(false);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
     appendPrivacy(reg, config);
     verify(privacyParameters).isEnabled();
-    verify(privacyParameters).isFlexiblePrivacyGroupsEnabled();
+    verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(DEFAULT_PRIVACY)).isInstanceOf(PrivacyPrecompiledContract.class);
-    assertThat(reg.get(FLEXIBLE_PRIVACY)).isNull();
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isInstanceOf(PrivacyPrecompiledContract.class);
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
   }
 
   @Test
-  public void whenFlexiblePrivacyGroupsEnabled_flexiblePrivacyPrecompileIsInRegistry() {
-    when(privacyParameters.isFlexiblePrivacyGroupsEnabled()).thenReturn(true);
+  public void whenOnchainPrivacyGroupsEnabled_onchainPrivacyPrecompileIsInRegistry() {
+    when(privacyParameters.isOnchainPrivacyGroupsEnabled()).thenReturn(true);
     when(privacyParameters.isEnabled()).thenReturn(true);
 
     appendPrivacy(reg, config);
     verify(privacyParameters).isEnabled();
-    verify(privacyParameters).isFlexiblePrivacyGroupsEnabled();
+    verify(privacyParameters).isOnchainPrivacyGroupsEnabled();
 
-    assertThat(reg.get(FLEXIBLE_PRIVACY)).isInstanceOf(FlexiblePrivacyPrecompiledContract.class);
-    assertThat(reg.get(DEFAULT_PRIVACY)).isNull();
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY))
+        .isInstanceOf(OnChainPrivacyPrecompiledContract.class);
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
   }
 
   @Test
@@ -77,7 +73,7 @@ public class MainnetPrecompiledContractRegistriesTest {
     verify(privacyParameters).isEnabled();
     verifyNoMoreInteractions(privacyParameters);
 
-    assertThat(reg.get(FLEXIBLE_PRIVACY)).isNull();
-    assertThat(reg.get(DEFAULT_PRIVACY)).isNull();
+    assertThat(reg.get(Address.ONCHAIN_PRIVACY)).isNull();
+    assertThat(reg.get(Address.DEFAULT_PRIVACY)).isNull();
   }
 }

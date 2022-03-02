@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.internal.MemoryEntry;
-import org.hyperledger.besu.evm.internal.StorageEntry;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
+import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
 
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +56,7 @@ public class TraceFrame {
   private Gas gasRemainingPostExecution;
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
-  private final Optional<StorageEntry> maybeUpdatedStorage;
+  private final Optional<MemoryEntry> maybeUpdatedStorage;
   private Optional<Gas> precompiledGasCost;
 
   public TraceFrame(
@@ -83,7 +82,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stackPostExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory,
-      final Optional<StorageEntry> maybeUpdatedStorage) {
+      final Optional<MemoryEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -93,7 +92,7 @@ public class TraceFrame {
     this.exceptionalHaltReason = exceptionalHaltReason;
     this.recipient = recipient;
     this.value = value;
-    this.inputData = inputData;
+    this.inputData = inputData.copy();
     this.outputData = outputData;
     this.stack = stack;
     this.memory = memory;
@@ -225,7 +224,7 @@ public class TraceFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<StorageEntry> getMaybeUpdatedStorage() {
+  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 

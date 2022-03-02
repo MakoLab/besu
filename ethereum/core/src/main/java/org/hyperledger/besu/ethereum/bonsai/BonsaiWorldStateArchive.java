@@ -16,17 +16,15 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
-
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,15 +32,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateArchive implements WorldStateArchive {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateArchive.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
@@ -80,12 +78,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             layeredWorldStatesByHash.computeIfPresent(
                 eventBlockHeader.getParentHash(),
                 (hash, bonsaiLayeredWorldState) -> {
-                  if (layeredWorldStatesByHash.containsKey(
-                      fromPlugin(eventBlockHeader.getBlockHash()))) {
+                  if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getHash())) {
                     bonsaiLayeredWorldState.setNextWorldView(
-                        Optional.of(
-                            layeredWorldStatesByHash.get(
-                                fromPlugin(eventBlockHeader.getBlockHash()))));
+                        Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getHash())));
                   }
                   return bonsaiLayeredWorldState;
                 });
@@ -166,7 +161,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                   this,
                   Optional.empty(),
                   header.getNumber(),
-                  fromPlugin(header.getStateRoot()),
+                  header.getStateRoot(),
                   trieLogLayer.get()));
         }
       }
@@ -184,7 +179,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       try {
 
         final Optional<BlockHeader> maybePersistedHeader =
-            blockchain.getBlockHeader(persistedState.blockHash()).map(BlockHeader.class::cast);
+            blockchain.getBlockHeader(persistedState.blockHash());
 
         final List<TrieLogLayer> rollBacks = new ArrayList<>();
         final List<TrieLogLayer> rollForwards = new ArrayList<>();
@@ -194,34 +189,27 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
           BlockHeader persistedHeader = maybePersistedHeader.get();
           // roll back from persisted to even with target
-          Hash persistedBlockHash = persistedHeader.getBlockHash();
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
-            LOG.debug("Rollback {}", persistedBlockHash);
-            rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
+            LOG.debug("Rollback {}", persistedHeader.getHash());
+            rollBacks.add(getTrieLogLayer(persistedHeader.getHash()).get());
             persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
-            persistedBlockHash = persistedHeader.getBlockHash();
           }
           // roll forward to target
-          Hash targetBlockHash = targetHeader.getBlockHash();
           while (persistedHeader.getNumber() < targetHeader.getNumber()) {
-            LOG.debug("Rollforward {}", targetBlockHash);
-            rollForwards.add(getTrieLogLayer(targetBlockHash).get());
+            LOG.debug("Rollforward {}", targetHeader.getHash());
+            rollForwards.add(getTrieLogLayer(targetHeader.getHash()).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
-            targetBlockHash = targetHeader.getBlockHash();
           }
 
           // roll back in tandem until we hit a shared state
-          while (!persistedBlockHash.equals(targetBlockHash)) {
-            LOG.debug("Paired Rollback {}", persistedBlockHash);
-            LOG.debug("Paired Rollforward {}", targetBlockHash);
-            rollForwards.add(getTrieLogLayer(targetBlockHash).get());
+          while (!persistedHeader.getHash().equals(targetHeader.getHash())) {
+            LOG.debug("Paired Rollback {}", persistedHeader.getHash());
+            LOG.debug("Paired Rollforward {}", targetHeader.getHash());
+            rollForwards.add(getTrieLogLayer(targetHeader.getHash()).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
 
-            rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
+            rollBacks.add(getTrieLogLayer(persistedHeader.getHash()).get());
             persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
-
-            targetBlockHash = targetHeader.getBlockHash();
-            persistedBlockHash = persistedHeader.getBlockHash();
           }
         }
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -26,22 +27,27 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final ConsensusContext consensusContext;
+  private final Object consensusState;
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final ConsensusContext consensusContext) {
+      final Object consensusState) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
-    this.consensusContext = consensusContext;
+    this.consensusState = consensusState;
   }
 
   public static ProtocolContext init(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
+      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory) {
+    if (blockchain.getChainHeadBlockNumber() < 1) {
+      genesisState.writeStateTo(worldStateArchive.getMutable());
+    }
+
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
@@ -56,7 +62,7 @@ public class ProtocolContext {
     return worldStateArchive;
   }
 
-  public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
-    return consensusContext.as(klass);
+  public <C> C getConsensusState(final Class<C> klass) {
+    return klass.cast(consensusState);
   }
 }

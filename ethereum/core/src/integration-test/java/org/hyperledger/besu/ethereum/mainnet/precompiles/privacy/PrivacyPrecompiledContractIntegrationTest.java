@@ -17,23 +17,23 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
@@ -44,14 +44,12 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.TesseraTestHarness;
-import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
+import org.hyperledger.enclave.testutil.OrionTestHarness;
+import org.hyperledger.enclave.testutil.OrionTestHarnessFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -87,8 +85,9 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   private static Enclave enclave;
   private static MessageFrame messageFrame;
+  private static Blockchain blockchain;
 
-  private static TesseraTestHarness testHarness;
+  private static OrionTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
   private static final Vertx vertx = Vertx.vertx();
@@ -100,6 +99,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
         TransactionProcessingResult.successful(
             null, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
+            nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
@@ -119,34 +119,32 @@ public class PrivacyPrecompiledContractIntegrationTest {
     folder.create();
 
     testHarness =
-        TesseraTestHarnessFactory.create(
+        OrionTestHarnessFactory.create(
             "enclave",
             folder.newFolder().toPath(),
-            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"),
-            Optional.empty());
+            new EnclaveKeyConfiguration("enclave_key_0.pub", "enclave_key_1.key"));
 
     testHarness.start();
 
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
+    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
-    when(messageFrame.getBlockValues()).thenReturn(block.getHeader());
+    when(blockchain.getGenesisBlock()).thenReturn(genesis);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
+    when(messageFrame.getBlockchain()).thenReturn(blockchain);
+    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     when(privateMetadataUpdater.getPrivateBlockMetadata(any())).thenReturn(null);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
-    when(messageFrame.getContextVariable(
-            eq(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE), anyBoolean()))
-        .thenReturn(false);
-    when(messageFrame.getContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
-        .thenReturn(privateMetadataUpdater);
-    when(messageFrame.hasContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
-        .thenReturn(true);
+    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
@@ -218,7 +216,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("Index 9 out of bounds for length 9");
+    assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
   }
 
   @Test
@@ -230,6 +228,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("Recipient not found for key:");
+    assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
   }
 }

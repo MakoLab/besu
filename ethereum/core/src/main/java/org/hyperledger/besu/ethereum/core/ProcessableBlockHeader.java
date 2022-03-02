@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,18 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.frame.BlockValues;
-
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-
 /** A block header capable of being processed. */
-public class ProcessableBlockHeader implements BlockValues {
+public class ProcessableBlockHeader {
 
   protected final Hash parentHash;
 
@@ -40,9 +32,7 @@ public class ProcessableBlockHeader implements BlockValues {
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
-  protected final Wei baseFee;
-  // prevRandao is included for post-merge blocks
-  protected final Bytes32 mixHashOrPrevRandao;
+  protected final Long baseFee;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -51,8 +41,7 @@ public class ProcessableBlockHeader implements BlockValues {
       final long number,
       final long gasLimit,
       final long timestamp,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Long baseFee) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -60,7 +49,6 @@ public class ProcessableBlockHeader implements BlockValues {
     this.gasLimit = gasLimit;
     this.timestamp = timestamp;
     this.baseFee = baseFee;
-    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
   }
 
   /**
@@ -91,21 +79,10 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   /**
-   * Returns the block difficulty.
-   *
-   * @return the block difficulty
-   */
-  @Override
-  public Bytes getDifficultyBytes() {
-    return difficulty.getAsBytes32();
-  }
-
-  /**
    * Returns the block number.
    *
    * @return the block number
    */
-  @Override
   public long getNumber() {
     return number;
   }
@@ -115,7 +92,6 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the block gas limit
    */
-  @Override
   public long getGasLimit() {
     return gasLimit;
   }
@@ -125,7 +101,6 @@ public class ProcessableBlockHeader implements BlockValues {
    *
    * @return the block timestamp
    */
-  @Override
   public long getTimestamp() {
     return timestamp;
   }
@@ -133,19 +108,9 @@ public class ProcessableBlockHeader implements BlockValues {
   /**
    * Returns the basefee of the block.
    *
-   * @return the optional long value for base fee
+   * @return the raw bytes of the extra data field
    */
-  @Override
-  public Optional<Wei> getBaseFee() {
+  public Optional<Long> getBaseFee() {
     return Optional.ofNullable(baseFee);
-  }
-
-  /**
-   * Returns the prevRandao of the block.
-   *
-   * @return the raw bytes of the prevRandao field
-   */
-  public Optional<Bytes32> getPrevRandao() {
-    return Optional.ofNullable(mixHashOrPrevRandao);
   }
 }

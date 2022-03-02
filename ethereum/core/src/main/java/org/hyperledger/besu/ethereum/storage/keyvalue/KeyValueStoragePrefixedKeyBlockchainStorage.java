@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -42,10 +42,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       Bytes.wrap("chainHeadHash".getBytes(StandardCharsets.UTF_8));
   private static final Bytes FORK_HEADS_KEY =
       Bytes.wrap("forkHeads".getBytes(StandardCharsets.UTF_8));
-  private static final Bytes FINALIZED_BLOCK_HASH_KEY =
-      Bytes.wrap("finalizedBlockHash".getBytes(StandardCharsets.UTF_8));
 
-  private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
+  private static final Bytes CONSTANTS_PREFIX = Bytes.of(1);
   static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
   private static final Bytes BLOCK_BODY_PREFIX = Bytes.of(3);
   private static final Bytes TRANSACTION_RECEIPTS_PREFIX = Bytes.of(4);
@@ -64,19 +62,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Optional<Hash> getChainHead() {
-    return get(VARIABLES_PREFIX, CHAIN_HEAD_KEY).map(this::bytesToHash);
+    return get(CONSTANTS_PREFIX, CHAIN_HEAD_KEY).map(this::bytesToHash);
   }
 
   @Override
   public Collection<Hash> getForkHeads() {
-    return get(VARIABLES_PREFIX, FORK_HEADS_KEY)
+    return get(CONSTANTS_PREFIX, FORK_HEADS_KEY)
         .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
         .orElse(Lists.newArrayList());
-  }
-
-  @Override
-  public Optional<Hash> getFinalized() {
-    return get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY).map(this::bytesToHash);
   }
 
   @Override
@@ -171,19 +164,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void setChainHead(final Hash blockHash) {
-      set(VARIABLES_PREFIX, CHAIN_HEAD_KEY, blockHash);
+      set(CONSTANTS_PREFIX, CHAIN_HEAD_KEY, blockHash);
     }
 
     @Override
     public void setForkHeads(final Collection<Hash> forkHeadHashes) {
       final Bytes data =
           RLP.encode(o -> o.writeList(forkHeadHashes, (val, out) -> out.writeBytes(val)));
-      set(VARIABLES_PREFIX, FORK_HEADS_KEY, data);
-    }
-
-    @Override
-    public void setFinalized(final Hash blockHash) {
-      set(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY, blockHash);
+      set(CONSTANTS_PREFIX, FORK_HEADS_KEY, data);
     }
 
     @Override

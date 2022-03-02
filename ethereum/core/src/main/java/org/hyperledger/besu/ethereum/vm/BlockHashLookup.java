@@ -14,16 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.datatypes.Hash.ZERO;
-
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.ethereum.vm.operations.BlockHashOperation;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Calculates and caches block hashes by number following the chain for a specific branch. This is
@@ -33,7 +30,7 @@ import java.util.function.Function;
  * <p>A new BlockHashCache must be created for each block being processed but should be reused for
  * all transactions within that block.
  */
-public class BlockHashLookup implements Function<Long, Hash> {
+public class BlockHashLookup {
 
   private ProcessableBlockHeader searchStartHeader;
   private final Blockchain blockchain;
@@ -45,8 +42,7 @@ public class BlockHashLookup implements Function<Long, Hash> {
     hashByNumber.put(currentBlock.getNumber() - 1, currentBlock.getParentHash());
   }
 
-  @Override
-  public Hash apply(final Long blockNumber) {
+  public Hash getBlockHash(final long blockNumber) {
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
@@ -57,6 +53,6 @@ public class BlockHashLookup implements Function<Long, Hash> {
         hashByNumber.put(searchStartHeader.getNumber() - 1, searchStartHeader.getParentHash());
       }
     }
-    return hashByNumber.getOrDefault(blockNumber, ZERO);
+    return hashByNumber.getOrDefault(blockNumber, Hash.ZERO);
   }
 }

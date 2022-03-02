@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,16 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class BlockHeaderTestFixture {
 
@@ -40,8 +35,7 @@ public class BlockHeaderTestFixture {
   private long number = 0;
 
   private long gasLimit = 0;
-  private Optional<Wei> baseFee = Optional.empty();
-  private Optional<Bytes32> prevRandao = Optional.empty();
+  private Optional<Long> baseFee = Optional.empty();
   private long gasUsed = 0;
   private long timestamp = 0;
   private Bytes extraData = Bytes.EMPTY;
@@ -64,7 +58,6 @@ public class BlockHeaderTestFixture {
     builder.gasLimit(gasLimit);
     builder.gasUsed(gasUsed);
     baseFee.ifPresent(builder::baseFee);
-    prevRandao.ifPresent((builder::prevRandao));
     builder.timestamp(timestamp);
     builder.extraData(extraData);
     builder.mixHash(mixHash);
@@ -129,13 +122,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture baseFeePerGas(final Wei baseFee) {
+  public BlockHeaderTestFixture baseFeePerGas(final long baseFee) {
     this.baseFee = Optional.of(baseFee);
-    return this;
-  }
-
-  public BlockHeaderTestFixture prevRandao(final Bytes32 prevRandao) {
-    this.prevRandao = Optional.ofNullable(prevRandao);
     return this;
   }
 

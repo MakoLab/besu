@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import java.util.function.Function;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.Logger;
 
 public class ConstantFieldValidationRule<T> implements DetachedBlockHeaderValidationRule {
-  private static final Logger LOG = LoggerFactory.getLogger(ConstantFieldValidationRule.class);
+  private static final Logger LOG = getLogger();
   private final T expectedValue;
   private final Function<BlockHeader, T> accessor;
   private final String fieldName;

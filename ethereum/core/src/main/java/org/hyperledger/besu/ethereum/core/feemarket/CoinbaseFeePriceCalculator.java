@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.Optional;
 
 @FunctionalInterface
 public interface CoinbaseFeePriceCalculator {
-  Wei price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Wei> baseFee);
+  Wei price(Gas coinbaseFee, Wei transactionGasPrice, Optional<Long> baseFee);
 
   static CoinbaseFeePriceCalculator frontier() {
     return (coinbaseFee, transactionGasPrice, baseFee) -> coinbaseFee.priceFor(transactionGasPrice);
@@ -29,7 +29,7 @@ public interface CoinbaseFeePriceCalculator {
 
   static CoinbaseFeePriceCalculator eip1559() {
     return (coinbaseFee, transactionGasPrice, baseFee) -> {
-      return coinbaseFee.priceFor(transactionGasPrice.subtract(baseFee.orElseThrow()));
+      return coinbaseFee.priceFor(transactionGasPrice.subtract(Wei.of(baseFee.orElseThrow())));
     };
   }
 }

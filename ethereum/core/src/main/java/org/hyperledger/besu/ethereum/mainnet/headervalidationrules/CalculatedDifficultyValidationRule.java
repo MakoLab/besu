@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
@@ -22,12 +21,11 @@ import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderValidationRule {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(CalculatedDifficultyValidationRule.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final DifficultyCalculator difficultyCalculator;
 
   public CalculatedDifficultyValidationRule(final DifficultyCalculator difficultyCalculator) {
@@ -37,9 +35,6 @@ public class CalculatedDifficultyValidationRule implements AttachedBlockHeaderVa
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {
-    if (MergeConfigOptions.isMergeEnabled()) {
-      return true;
-    }
     final BigInteger actualDifficulty = new BigInteger(1, header.getDifficulty().toArray());
     final BigInteger expectedDifficulty =
         difficultyCalculator.nextDifficulty(header.getTimestamp(), parent, context);

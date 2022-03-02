@@ -16,14 +16,12 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
-
-import org.apache.tuweni.bytes.Bytes32;
 
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
@@ -112,23 +110,11 @@ public class StateTrieAccountValue {
 
     final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
-    Bytes32 storageRoot;
-    Bytes32 codeHash;
-    if (in.nextIsNull()) {
-      storageRoot = Hash.EMPTY_TRIE_HASH;
-      in.skipNext();
-    } else {
-      storageRoot = in.readBytes32();
-    }
-    if (in.nextIsNull()) {
-      codeHash = Hash.EMPTY;
-      in.skipNext();
-    } else {
-      codeHash = in.readBytes32();
-    }
+    final Hash storageRoot = Hash.wrap(in.readBytes32());
+    final Hash codeHash = Hash.wrap(in.readBytes32());
 
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
+    return new StateTrieAccountValue(nonce, balance, storageRoot, codeHash);
   }
 }

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -30,7 +29,6 @@ public class MainnetProtocolSpecFactory {
   private final boolean isRevertReasonEnabled;
   private final boolean quorumCompatibilityMode;
   private final OptionalLong ecip1017EraRounds;
-  private final EvmConfiguration evmConfiguration;
 
   public MainnetProtocolSpecFactory(
       final Optional<BigInteger> chainId,
@@ -38,105 +36,73 @@ public class MainnetProtocolSpecFactory {
       final OptionalInt evmStackSize,
       final boolean isRevertReasonEnabled,
       final boolean quorumCompatibilityMode,
-      final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
+      final OptionalLong ecip1017EraRounds) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
     this.ecip1017EraRounds = ecip1017EraRounds;
-    this.evmConfiguration = evmConfiguration;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
     return MainnetProtocolSpecs.frontierDefinition(
-        contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder homesteadDefinition() {
     return MainnetProtocolSpecs.homesteadDefinition(
-        contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder daoRecoveryInitDefinition() {
     return MainnetProtocolSpecs.daoRecoveryInitDefinition(
-        contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder daoRecoveryTransitionDefinition() {
     return MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-        contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder tangerineWhistleDefinition() {
     return MainnetProtocolSpecs.tangerineWhistleDefinition(
-        contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder spuriousDragonDefinition() {
     return MainnetProtocolSpecs.spuriousDragonDefinition(
-        chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
     return MainnetProtocolSpecs.byzantiumDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
     return MainnetProtocolSpecs.constantinopleDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
     return MainnetProtocolSpecs.petersburgDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
     return MainnetProtocolSpecs.istanbulDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
     return MainnetProtocolSpecs.muirGlacierDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
     return MainnetProtocolSpecs.berlinDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -146,32 +112,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        quorumCompatibilityMode,
-        evmConfiguration);
-  }
-
-  public ProtocolSpecBuilder arrowGlacierDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.arrowGlacierDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        quorumCompatibilityMode,
-        evmConfiguration);
-  }
-
-  public ProtocolSpecBuilder preMergeForkDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.preMergeForkDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,27 +120,17 @@ public class MainnetProtocolSpecFactory {
   // Classic Protocol Specs
   public ProtocolSpecBuilder dieHardDefinition() {
     return ClassicProtocolSpecs.dieHardDefinition(
-        chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode, evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder gothamDefinition() {
     return ClassicProtocolSpecs.gothamDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder defuseDifficultyBombDefinition() {
     return ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {
@@ -209,8 +140,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder aghartaDefinition() {
@@ -220,8 +150,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder phoenixDefinition() {
@@ -231,8 +160,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder thanosDefinition() {
@@ -242,8 +170,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder magnetoDefinition() {
@@ -253,19 +180,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
-  }
-
-  public ProtocolSpecBuilder mystiqueDefinition() {
-    return ClassicProtocolSpecs.mystiqueDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   public ProtocolSpecBuilder ecip1049Definition() {
@@ -275,7 +190,6 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 }

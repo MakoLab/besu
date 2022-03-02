@@ -19,21 +19,19 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Gas;
+import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.ethereum.mainnet.ConstantinopleGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
-import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.operation.Create2Operation;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
+import org.hyperledger.besu.ethereum.vm.Code;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
 
 import java.util.ArrayDeque;
 
@@ -57,7 +55,6 @@ public class Create2OperationTest {
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
-  private final EVM evm = mock(EVM.class);
   private final Create2Operation operation =
       new Create2Operation(new ConstantinopleGasCalculator());
 
@@ -143,33 +140,31 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(Code.createLegacyCode(codeBytes, Hash.hash(codeBytes)))
+            .code(new Code(codeBytes))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(mock(BlockHashLookup.class))
-            .blockValues(mock(ProcessableBlockHeader.class))
+            .blockHeader(mock(ProcessableBlockHeader.class))
+            .blockchain(mock(Blockchain.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(Gas.of(100000))
-            .worldUpdater(worldUpdater)
+            .worldState(worldUpdater)
             .build();
     messageFrame.pushStackItem(UInt256.fromHexString(salt));
     messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
     messageFrame.pushStackItem(UInt256.ZERO);
-    messageFrame.expandMemory(0, 500);
-    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
+    messageFrame.expandMemory(UInt256.ZERO, UInt256.valueOf(500));
+    messageFrame.writeMemory(
+        UInt256.fromBytes(memoryOffset), UInt256.valueOf(code.length()), codeBytes);
 
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCode(any(), any()))
-        .thenAnswer(
-            invocation ->
-                Code.createLegacyCode(invocation.getArgument(1), invocation.getArgument(0)));
   }
 
   @Test
@@ -180,7 +175,7 @@ public class Create2OperationTest {
 
   @Test
   public void shouldCalculateGasPrice() {
-    final OperationResult result = operation.execute(messageFrame, evm);
+    final OperationResult result = operation.execute(messageFrame, null);
     assertThat(result.getHaltReason()).isEmpty();
     assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
   }

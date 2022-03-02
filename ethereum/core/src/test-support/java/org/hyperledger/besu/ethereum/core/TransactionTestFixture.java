@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -30,7 +28,7 @@ public class TransactionTestFixture {
 
   private long nonce = 0;
 
-  private Wei gasPrice = Wei.of(5000);
+  private Wei gasPrice = Wei.of(5);
 
   private long gasLimit = 5000;
 

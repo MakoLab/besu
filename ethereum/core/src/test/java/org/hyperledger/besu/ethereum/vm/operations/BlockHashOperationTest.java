@@ -20,15 +20,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.ethereum.vm.MessageFrame;
 
+import com.google.common.base.Strings;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -49,7 +49,7 @@ public class BlockHashOperationTest {
 
   @Test
   public void shouldReturnZeroWhenArgIsBiggerThanALong() {
-    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100);
+    assertBlockHash(Bytes32.fromHexString(Strings.repeat("F", 64)), Bytes32.ZERO, 100);
   }
 
   @Test
@@ -83,9 +83,9 @@ public class BlockHashOperationTest {
   @Test
   public void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
-    when(blockHashLookup.apply(100L)).thenReturn(blockHash);
+    when(blockHashLookup.getBlockHash(100)).thenReturn(blockHash);
     assertBlockHash(100, blockHash, 200);
-    verify(blockHashLookup).apply(100L);
+    verify(blockHashLookup).getBlockHash(100);
   }
 
   private void assertBlockHash(
@@ -102,7 +102,7 @@ public class BlockHashOperationTest {
             .pushStackItem(UInt256.fromBytes(input))
             .build();
     blockHashOperation.execute(frame, null);
-    final Bytes result = frame.popStackItem();
+    final Bytes32 result = frame.popStackItem();
     assertThat(result).isEqualTo(expectedOutput);
     assertThat(frame.stackSize()).isZero();
   }

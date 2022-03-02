@@ -14,22 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.AbstractWorldUpdater;
+import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.AccountState;
+import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.UpdateTrackingAccount;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
-import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
-import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -150,7 +151,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .map(
             entry -> {
               final Optional<Address> address = getAccountTrieKeyPreimage(entry.getKey());
-              final WorldStateAccount account =
+              final AccountState account =
                   deserializeAccount(
                       address.orElse(Address.ZERO), Hash.wrap(entry.getKey()), entry.getValue());
               return new StreamableAccount(address, account);
@@ -220,7 +221,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         .or(() -> preimageStorage.getAccountTrieKeyPreimage(trieKey));
   }
   // An immutable class that represents an individual account as stored in
-  // the world state's underlying merkle patricia trie.
+  // in the world state's underlying merkle patricia trie.
   protected class WorldStateAccount implements Account {
 
     private final Address address;

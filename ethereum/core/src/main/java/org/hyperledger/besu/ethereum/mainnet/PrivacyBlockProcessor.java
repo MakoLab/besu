@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
-
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
@@ -40,14 +39,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PrivacyBlockProcessor implements BlockProcessor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PrivacyBlockProcessor.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final BlockProcessor blockProcessor;
   private final ProtocolSchedule protocolSchedule;
@@ -109,7 +108,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions) {
     transactions.stream()
-        .filter(this::onchainAddToGroupPrivateMarkerTransactions)
+        .filter(this::onChainAddToGroupPrivateMarkerTransactions)
         .forEach(
             pmt -> {
               final Bytes32 privateTransactionsLookupId =
@@ -159,9 +158,9 @@ public class PrivacyBlockProcessor implements BlockProcessor {
             });
   }
 
-  private boolean onchainAddToGroupPrivateMarkerTransactions(final Transaction t) {
+  private boolean onChainAddToGroupPrivateMarkerTransactions(final Transaction t) {
     return t.getTo().isPresent()
-        && t.getTo().equals(Optional.of(FLEXIBLE_PRIVACY))
+        && t.getTo().equals(Optional.of(Address.ONCHAIN_PRIVACY))
         && t.getPayload().size() == 64;
   }
 

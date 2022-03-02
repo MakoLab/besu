@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Collection;
@@ -29,8 +29,6 @@ public interface BlockchainStorage {
   Optional<Hash> getChainHead();
 
   Collection<Hash> getForkHeads();
-
-  Optional<Hash> getFinalized();
 
   Optional<BlockHeader> getBlockHeader(Hash blockHash);
 
@@ -63,8 +61,6 @@ public interface BlockchainStorage {
     void setChainHead(Hash blockHash);
 
     void setForkHeads(Collection<Hash> forkHeadHashes);
-
-    void setFinalized(Hash blockHash);
 
     void removeBlockHash(long blockNumber);
 

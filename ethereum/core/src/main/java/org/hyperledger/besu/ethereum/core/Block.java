@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -98,9 +97,5 @@ public class Block {
     sb.append("header=").append(header).append(", ");
     sb.append("body=").append(body);
     return sb.append("}").toString();
-  }
-
-  public String toLogString() {
-    return getHeader().toLogString();
   }
 }

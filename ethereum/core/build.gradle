@@ -37,18 +37,22 @@ sourceSets {
   }
 }
 
-dependencies {
-  api 'org.slf4j:slf4j-api'
+repositories {
+  mavenCentral()
+  maven { url "https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j"}
+  maven { url "https://repo.eclipse.org/content/groups/acceleo" }
+  maven { url "https://repo.eclipse.org/content/groups/viatra2" }
+  maven { url "https://raw.github.com/neo4j-contrib/m2/master/releases" }
+}
 
+dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':config')
   implementation project(':crypto')
-  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
-  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
@@ -58,18 +62,30 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
   implementation 'net.java.dev.jna:jna'
+  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+ 
+  implementation 'org.eclipse.rdf4j:rdf4j-model:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-repository-sail:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-runtime:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-sail-memory:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-repository-contextaware:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-rio-rdfxml:3.7.1'
+  implementation 'org.eclipse.rdf4j:rdf4j-rio-turtle:3.7.1'
+
+  implementation 'org.web3j:abi:4.9.0'
 
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor 'org.immutables:value'
 
+  runtimeOnly 'org.apache.logging.log4j:log4j-core'
+
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':ethereum:api')
   testImplementation project(path: ':ethereum:referencetests')
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
@@ -86,9 +102,9 @@ dependencies {
   integrationTestImplementation project(':testutil')
 
   integrationTestImplementation 'junit:junit'
+  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.testcontainers:testcontainers'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':ethereum:eth')

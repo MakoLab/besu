@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Address;
-
 import java.math.BigInteger;
 
 public class AddressHelpers {

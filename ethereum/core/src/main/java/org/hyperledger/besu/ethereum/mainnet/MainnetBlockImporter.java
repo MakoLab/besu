@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MainnetBlockImporter implements BlockImporter {
 
@@ -40,15 +41,15 @@ public class MainnetBlockImporter implements BlockImporter {
       return true;
     }
 
-    final var result =
+    final Optional<BlockValidator.BlockProcessingOutputs> outputs =
         blockValidator.validateAndProcessBlock(
             context, block, headerValidationMode, ommerValidationMode);
 
-    result.blockProcessingOutputs.ifPresent(
+    outputs.ifPresent(
         processingOutputs ->
             context.getBlockchain().appendBlock(block, processingOutputs.receipts));
 
-    return result.blockProcessingOutputs.isPresent();
+    return outputs.isPresent();
   }
 
   @Override

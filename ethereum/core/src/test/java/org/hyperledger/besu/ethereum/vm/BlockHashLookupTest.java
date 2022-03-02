@@ -18,14 +18,14 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Optional;
 
@@ -33,10 +33,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 256;
@@ -82,24 +79,24 @@ public class BlockHashLookupTest {
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
-    Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
+  public void shouldReturnEmptyHashWhenRequestedBlockNotOnChain() {
+    Assertions.assertThat(lookup.getBlockHash(CURRENT_BLOCK_NUMBER + 20)).isEqualTo(Hash.ZERO);
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
+  public void shouldReturnEmptyHashWhenParentBlockNotOnChain() {
     final BlockHashLookup lookupWithUnavailableParent =
         new BlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);
-    Assertions.assertThat(lookupWithUnavailableParent.apply((long) CURRENT_BLOCK_NUMBER))
+    Assertions.assertThat(lookupWithUnavailableParent.getBlockHash(CURRENT_BLOCK_NUMBER))
         .isEqualTo(Hash.ZERO);
   }
 
   @Test
   public void shouldGetParentHashFromCurrentBlock() {
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
-    verifyNoInteractions(blockchain);
+    verifyZeroInteractions(blockchain);
   }
 
   @Test
@@ -113,7 +110,7 @@ public class BlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber) {
-    Assertions.assertThat(lookup.apply((long) blockNumber))
+    Assertions.assertThat(lookup.getBlockHash(blockNumber))
         .isEqualTo(headers[blockNumber].getHash());
   }
 

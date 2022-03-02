@@ -21,12 +21,12 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 
 import java.util.function.Supplier;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PrivateStorageMigrationService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PrivateStorageMigrationService.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   private final PrivateStateStorage privateStateStorage;
   private final boolean migrationFlag;

@@ -16,22 +16,38 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
+import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
+import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public class PluginPrivacyController extends AbstractPrivacyController {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
+public class PluginPrivacyController implements PrivacyController {
+  private final PrivateTransactionValidator privateTransactionValidator;
+  private final PrivateStateRootResolver privateStateRootResolver;
+  private final Blockchain blockchain;
+  private final PrivateTransactionSimulator privateTransactionSimulator;
+  private final PrivateNonceProvider privateNonceProvider;
+  private final PrivateWorldStateReader privateWorldStateReader;
   private final PrivacyPluginService privacyPluginService;
 
   public PluginPrivacyController(
@@ -41,13 +57,12 @@ public class PluginPrivacyController extends AbstractPrivacyController {
       final PrivateTransactionSimulator privateTransactionSimulator,
       final PrivateNonceProvider privateNonceProvider,
       final PrivateWorldStateReader privateWorldStateReader) {
-    super(
-        blockchain,
-        privacyParameters,
-        chainId,
-        privateTransactionSimulator,
-        privateNonceProvider,
-        privateWorldStateReader);
+    this.privateTransactionValidator = new PrivateTransactionValidator(chainId);
+    this.blockchain = blockchain;
+    this.privateTransactionSimulator = privateTransactionSimulator;
+    this.privateNonceProvider = privateNonceProvider;
+    this.privateWorldStateReader = privateWorldStateReader;
+    this.privateStateRootResolver = privacyParameters.getPrivateStateRootResolver();
     this.privacyPluginService = privacyParameters.getPrivacyService();
   }
 
@@ -61,6 +76,16 @@ public class PluginPrivacyController extends AbstractPrivacyController {
         .getPayloadProvider()
         .generateMarkerPayload(privateTransaction, privacyUserId)
         .toBase64String();
+  }
+
+  @Override
+  public ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
+      final PrivateTransaction privateTransaction, final String privacyUserId) {
+    final String privacyGroupId = privateTransaction.determinePrivacyGroupId().toBase64String();
+    return privateTransactionValidator.validate(
+        privateTransaction,
+        determineBesuNonce(privateTransaction.getSender(), privacyGroupId, privacyUserId),
+        true);
   }
 
   @Override
@@ -106,6 +131,12 @@ public class PluginPrivacyController extends AbstractPrivacyController {
   }
 
   @Override
+  public ReceiveResponse retrieveTransaction(final String enclaveKey, final String privacyUserId) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
   public PrivacyGroup createPrivacyGroup(
       final List<String> addresses,
       final String name,
@@ -119,6 +150,101 @@ public class PluginPrivacyController extends AbstractPrivacyController {
   public String deletePrivacyGroup(final String privacyGroupId, final String privacyUserId) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
+  public PrivacyGroup[] findOffChainPrivacyGroupByMembers(
+      final List<String> addresses, final String privacyUserId) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
+  public long determineEeaNonce(
+      final String privateFrom,
+      final String[] privateFor,
+      final Address address,
+      final String privacyUserId) {
+
+    final String privacyGroupId = createPrivacyGroupId(privateFrom, privateFor);
+
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
+    return determineBesuNonce(address, privacyGroupId, privacyUserId);
+  }
+
+  private String createPrivacyGroupId(final String privateFrom, final String[] privateFor) {
+    final Bytes32 privacyGroupId =
+        PrivacyGroupUtil.calculateEeaPrivacyGroupId(
+            Bytes.fromBase64String(privateFrom),
+            Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList()));
+
+    return privacyGroupId.toBase64String();
+  }
+
+  @Override
+  public long determineBesuNonce(
+      final Address sender, final String privacyGroupId, final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
+    return privateNonceProvider.getNonce(
+        sender, Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)));
+  }
+
+  @Override
+  public Optional<TransactionProcessingResult> simulatePrivateTransaction(
+      final String privacyGroupId,
+      final String privacyUserId,
+      final CallParameter callParams,
+      final long blockNumber) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
+    return privateTransactionSimulator.process(privacyGroupId, callParams, blockNumber);
+  }
+
+  @Override
+  public Optional<Bytes> getContractCode(
+      final String privacyGroupId,
+      final Address contractAddress,
+      final Hash blockHash,
+      final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
+    return privateWorldStateReader.getContractCode(privacyGroupId, blockHash, contractAddress);
+  }
+
+  @Override
+  public PrivateTransactionSimulator getTransactionSimulator() {
+    return privateTransactionSimulator;
+  }
+
+  @Override
+  public Optional<Hash> getStateRootByBlockNumber(
+      final String privacyGroupId, final String privacyUserId, final long blockNumber) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+
+    return blockchain
+        .getBlockByNumber(blockNumber)
+        .map(
+            block ->
+                privateStateRootResolver.resolveLastStateRoot(
+                    Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), block.getHash()));
+  }
+
+  @Override
+  public Optional<String> buildAndSendAddPayload(
+      final PrivateTransaction privateTransaction,
+      final Bytes32 privacyGroupId,
+      final String privacyUserId) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin - you can not send a payload without it being on-chain");
+  }
+
+  @Override
+  public Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
+      final String toBase64String, final String privacyUserId) {
+
+    return findPrivacyGroupByGroupId(toBase64String, privacyUserId);
   }
 
   @Override
@@ -136,8 +262,29 @@ public class PluginPrivacyController extends AbstractPrivacyController {
   }
 
   @Override
-  public PrivacyGroup[] findPrivacyGroupByMembers(
+  public List<PrivacyGroup> findOnChainPrivacyGroupByMembers(
       final List<String> asList, final String privacyUserId) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
+  public Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
+      final Bytes privacyGroupId,
+      final String privacyUserId,
+      final PrivateTransaction privateTransaction) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
+  public List<PrivateTransactionWithMetadata> retrieveAddBlob(final String addDataKey) {
+    throw new PrivacyConfigurationNotSupportedException(
+        "Method not supported when using PrivacyPlugin");
+  }
+
+  @Override
+  public boolean isGroupAdditionTransaction(final PrivateTransaction privateTransaction) {
     throw new PrivacyConfigurationNotSupportedException(
         "Method not supported when using PrivacyPlugin");
   }
@@ -149,7 +296,7 @@ public class PluginPrivacyController extends AbstractPrivacyController {
         .getPrivacyGroupAuthProvider()
         .canAccess(privacyGroupId, privacyUserId, blockNumber)) {
       throw new MultiTenancyValidationException(
-          "Privacy group must contain the enclave public key");
+          "PrivacyUserId " + privacyUserId + " does not have access to " + privacyGroupId);
     }
   }
 

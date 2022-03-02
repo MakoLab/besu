@@ -14,23 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
-  private static final Logger LOG = LoggerFactory.getLogger(BaseFeeBlockBodyValidator.class);
+  private static final Logger LOG = LogManager.getLogger();
 
   public BaseFeeBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
@@ -59,9 +59,9 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
             .getTransactionPriceCalculator();
 
     for (final Transaction transaction : transactions) {
-      final Optional<Wei> baseFee = block.getHeader().getBaseFee();
+      final Optional<Long> baseFee = block.getHeader().getBaseFee();
       final Wei price = transactionPriceCalculator.price(transaction, baseFee);
-      if (price.compareTo(baseFee.orElseThrow()) < 0) {
+      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
         LOG.warn(
             "Invalid block: transaction gas price {} must be greater than base fee {}",
             price.toString(),

@@ -18,7 +18,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -28,8 +27,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ProtocolScheduleBuilder {
 
@@ -61,7 +60,7 @@ public class ProtocolScheduleBuilder {
     }
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
+  private static final Logger LOG = LogManager.getLogger();
   private final GenesisConfigOptions config;
   private final ProtocolSpecAdapters protocolSpecAdapters;
   private final Optional<BigInteger> defaultChainId;
@@ -69,7 +68,6 @@ public class ProtocolScheduleBuilder {
   private final boolean isRevertReasonEnabled;
   private final BadBlockManager badBlockManager = new BadBlockManager();
   private final boolean quorumCompatibilityMode;
-  private final EvmConfiguration evmConfiguration;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -77,16 +75,14 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   private Optional<BuilderMapEntry> create(
@@ -104,16 +100,14 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final boolean quorumCompatibilityMode) {
     this(
         config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+        quorumCompatibilityMode);
   }
 
   private ProtocolScheduleBuilder(
@@ -122,15 +116,13 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
-      final EvmConfiguration evmConfiguration) {
+      final boolean quorumCompatibilityMode) {
     this.config = config;
     this.defaultChainId = defaultChainId;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.quorumCompatibilityMode = quorumCompatibilityMode;
-    this.evmConfiguration = evmConfiguration;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -145,8 +137,7 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             quorumCompatibilityMode,
-            config.getEcip1017EraRounds(),
-            evmConfiguration);
+            config.getEcip1017EraRounds());
 
     validateForkOrdering();
 
@@ -204,8 +195,7 @@ public class ProtocolScheduleBuilder {
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(),
                       config.getEvmStackSize(),
-                      quorumCompatibilityMode,
-                      evmConfiguration));
+                      quorumCompatibilityMode));
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });
 
@@ -232,12 +222,6 @@ public class ProtocolScheduleBuilder {
                 create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
                 create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
                 create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
-                create(
-                    config.getArrowGlacierBlockNumber(),
-                    specFactory.arrowGlacierDefinition(config)),
-                create(
-                    config.getPreMergeForkBlockNumber(),
-                    specFactory.preMergeForkDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
@@ -250,7 +234,6 @@ public class ProtocolScheduleBuilder {
                 create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
                 create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
                 create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-                create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
                 create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
             .stream()
             .filter(Optional::isPresent)
@@ -326,8 +309,6 @@ public class ProtocolScheduleBuilder {
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("London", config.getLondonBlockNumber(), lastForkBlock);
-    lastForkBlock =
-        validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -347,7 +328,6 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

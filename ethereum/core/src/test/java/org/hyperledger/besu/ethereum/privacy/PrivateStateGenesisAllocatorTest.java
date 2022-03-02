@@ -16,19 +16,19 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
-import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.core.Address.DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT;
+import static org.hyperledger.besu.ethereum.core.Address.ONCHAIN_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
+import static org.hyperledger.besu.ethereum.privacy.group.OnChainGroupManagement.PROXY_RUNTIME_BYTECODE;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Account;
+import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;
 import org.hyperledger.besu.plugin.data.Quantity;
@@ -82,7 +82,7 @@ public class PrivateStateGenesisAllocatorTest {
               });
 
   @Test
-  public void whenOnchainDisabledAndNoAccountsProvidedNoGenesisIsApplied() {
+  public void whenOnChainDisabledAndNoAccountsProvidedNoGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(
             false, (privacyGroupId, blockNumber) -> Collections::emptyList);
@@ -94,7 +94,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnchainEnabledAndNoAccountsProvidedPrivacyManagementContractIsApplied() {
+  public void whenOnChainEnabledAndNoAccountsProvidedPrivacyManagementContractIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(
             true, (privacyGroupId, blockNumber) -> Collections::emptyList);
@@ -108,7 +108,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnchainEnabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
+  public void whenOnChainEnabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(true, (privacyGroupId, blockNumber) -> privacyGenesis);
 
@@ -122,7 +122,7 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   @Test
-  public void whenOnchainDisabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
+  public void whenOnChainDisabledAndAccountsProvidedPrivacyManagementContractAndGenesisIsApplied() {
     PrivateStateGenesisAllocator privateStateGenesisAllocator =
         new PrivateStateGenesisAllocator(false, (privacyGroupId, blockNumber) -> privacyGenesis);
 
@@ -131,7 +131,7 @@ public class PrivateStateGenesisAllocatorTest {
 
     assertThat(worldState.frontierRootHash()).isNotEqualTo(EMPTY_ROOT_HASH);
 
-    assertThat(worldState.get(FLEXIBLE_PRIVACY_PROXY)).isEqualTo(null);
+    assertThat(worldState.get(ONCHAIN_PRIVACY_PROXY)).isEqualTo(null);
 
     assertGenesisAccountApplied();
   }
@@ -144,12 +144,12 @@ public class PrivateStateGenesisAllocatorTest {
   }
 
   private void assertManagementContractApplied() {
-    Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
+    Account managementProxy = worldState.get(ONCHAIN_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
     assertThat(managementProxy.getStorageValue(UInt256.ZERO))
-        .isEqualTo(UInt256.fromBytes(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
+        .isEqualTo(UInt256.fromBytes(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT));
 
-    Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
+    Account managementContract = worldState.get(DEFAULT_ONCHAIN_PRIVACY_MANAGEMENT);
     assertThat(managementContract.getCode()).isEqualTo(DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
   }
 }

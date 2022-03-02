@@ -18,7 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
@@ -46,18 +45,6 @@ import com.google.common.io.Files;
 
 public class PrivacyParameters {
 
-  // Last address that can be generated for a pre-compiled contract
-  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
-  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
-  public static final Address FLEXIBLE_PRIVACY = Address.precompiled(PRIVACY - 1);
-
-  // Flexible privacy management contracts (injected in private state)
-  public static final Address FLEXIBLE_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
-  public static final Address DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT =
-      Address.precompiled(PRIVACY - 3);
-
-  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
-
   public static final URI DEFAULT_ENCLAVE_URL = URI.create("http://localhost:8888");
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
@@ -71,7 +58,7 @@ public class PrivacyParameters {
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateStorage privateStateStorage;
   private boolean multiTenancyEnabled;
-  private boolean flexiblePrivacyGroupsEnabled;
+  private boolean onchainPrivacyGroupsEnabled;
   private boolean privacyPluginEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
@@ -80,11 +67,11 @@ public class PrivacyParameters {
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
-      return PLUGIN_PRIVACY;
-    } else if (isFlexiblePrivacyGroupsEnabled()) {
-      return FLEXIBLE_PRIVACY;
+      return Address.PLUGIN_PRIVACY;
+    } else if (isOnchainPrivacyGroupsEnabled()) {
+      return Address.ONCHAIN_PRIVACY;
     } else {
-      return DEFAULT_PRIVACY;
+      return Address.DEFAULT_PRIVACY;
     }
   }
 
@@ -169,12 +156,12 @@ public class PrivacyParameters {
     return multiTenancyEnabled;
   }
 
-  private void setFlexiblePrivacyGroupsEnabled(final boolean flexiblePrivacyGroupsEnabled) {
-    this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
+  private void setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
+    this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
   }
 
-  public boolean isFlexiblePrivacyGroupsEnabled() {
-    return flexiblePrivacyGroupsEnabled;
+  public boolean isOnchainPrivacyGroupsEnabled() {
+    return onchainPrivacyGroupsEnabled;
   }
 
   private void setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
@@ -226,7 +213,7 @@ public class PrivacyParameters {
     // but privacy parameters is built before the plugin has had a chance to register a provider
     // and have cli options instantiated
     return new PrivateStateGenesisAllocator(
-        flexiblePrivacyGroupsEnabled, createPrivateGenesisProvider());
+        onchainPrivacyGroupsEnabled, createPrivateGenesisProvider());
   }
 
   private PrivacyGroupGenesisProvider createPrivateGenesisProvider() {
@@ -247,8 +234,8 @@ public class PrivacyParameters {
         + multiTenancyEnabled
         + ", privacyPluginEnabled = "
         + privacyPluginEnabled
-        + ", flexiblePrivacyGroupsEnabled = "
-        + flexiblePrivacyGroupsEnabled
+        + ", onchainPrivacyGroupsEnabled = "
+        + onchainPrivacyGroupsEnabled
         + ", enclaveUri='"
         + enclaveUri
         + ", privatePayloadEncryptionService='"
@@ -270,7 +257,7 @@ public class PrivacyParameters {
     private Path privacyKeyStoreFile;
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
-    private boolean flexiblePrivacyGroupsEnabled;
+    private boolean onchainPrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
     private PrivacyPluginService privacyPluginService;
@@ -320,8 +307,8 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setFlexiblePrivacyGroupsEnabled(final boolean flexiblePrivacyGroupsEnabled) {
-      this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
+    public Builder setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
+      this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
       return this;
     }
 
@@ -395,7 +382,7 @@ public class PrivacyParameters {
       }
       config.setEnabled(enabled);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
-      config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
+      config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;

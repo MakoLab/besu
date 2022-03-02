@@ -18,15 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.OperationRegistry;
-import org.hyperledger.besu.evm.operation.StopOperation;
+import org.hyperledger.besu.ethereum.mainnet.FrontierGasCalculator;
+import org.hyperledger.besu.ethereum.vm.operations.StopOperation;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -44,13 +37,12 @@ public class EVMTest {
 
   @Before
   public void setup() {
-    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT);
+    evm = new EVM(operationRegistry, gasCalculator);
   }
 
   @Test
   public void assertThatEndOfScriptNotExplicitlySetInCodeReturnsAVirtualOperation() {
-    final Bytes noEnd = Bytes.fromHexString("0x60203560003555606035604035556000");
-    final Code code = Code.createLegacyCode(noEnd, Hash.hash(noEnd));
+    final Code code = new Code(Bytes.fromHexString("0x60203560003555606035604035556000"));
     final Operation operation = evm.operationAtOffset(code, code.getSize());
     assertThat(operation).isNotNull();
     assertThat(operation.isVirtualOperation()).isTrue();
@@ -58,8 +50,7 @@ public class EVMTest {
 
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
-    final Bytes ends = Bytes.fromHexString("0x6020356000355560603560403555600000");
-    final Code code = Code.createLegacyCode(ends, Hash.hash(ends));
+    final Code code = new Code(Bytes.fromHexString("0x6020356000355560603560403555600000"));
     when(operationRegistry.get(anyByte())).thenReturn(new StopOperation(gasCalculator));
     final Operation operation = evm.operationAtOffset(code, code.getSize() - 1);
     assertThat(operation).isNotNull();
